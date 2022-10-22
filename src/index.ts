@@ -1,7 +1,14 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import type { Session, User, SupabaseClient } from "@supabase/supabase-js"
+import type { Session, User, SupabaseClient, RealtimePostgresChangesPayload } from "@supabase/supabase-js"
 
-export const realtime = (supabase: SupabaseClient, { schema = "public", idField = 'id' } = {}) => {
+interface SupaSnap<T> {
+    data: T[]
+    payload: RealtimePostgresChangesPayload<{
+        [key: string]: any;
+    }>
+}
+
+export const realtime = <T>(supabase: SupabaseClient, { schema = "public", idField = 'id' } = {}) => {
     const items: any[] = [];
 
     const _subscribe = (table: string, field?: string, value?: string) => {
@@ -10,13 +17,27 @@ export const realtime = (supabase: SupabaseClient, { schema = "public", idField 
         const filterChannel = hasFilter ? ':' + filterString : '';
         const filter = hasFilter ? filterString : undefined;
 
-        return (callback: (snap: any) => void) => {
+        // create the callback function
+        return (callback: (snap: SupaSnap<T>) => void) => {
             let select = supabase.from(table).select('*');
             select = hasFilter ? select.eq(field, value) : select;
-            select.then(({ data }) => {
+
+            // grab current value
+            select.then(({ data, error }) => {
                 if (data) items.push(...data);
-                callback({ data, payload: { schema, table } });
+                callback({
+                    data: data ?? [],
+                    payload: {
+                        schema,
+                        table,
+                        errors: error
+                    } as unknown as RealtimePostgresChangesPayload<{
+                        [key: string]: any;
+                    }>
+                });
             });
+
+            // grab value changes
             return supabase.channel(schema + ':' + table + filterChannel)
                 .on('postgres_changes', { event: '*', schema, table, filter }, (payload) => {
                     const e = payload.eventType;
@@ -36,6 +57,8 @@ export const realtime = (supabase: SupabaseClient, { schema = "public", idField 
                             break;
                         }
                     }
+
+                    // return ALL data with payload
                     callback({ data: items, payload });
                 }).subscribe();
         }
