@@ -1,5 +1,5 @@
 import type { Session, User, SupabaseClient, RealtimePostgresChangesPayload } from "@supabase/supabase-js";
-interface SupaSnap<T> {
+export interface SupaSnap<T> {
     data: T[];
     payload: RealtimePostgresChangesPayload<{
         [key: string]: any;
@@ -22,4 +22,3 @@ export declare const authSession: (supabase: SupabaseClient) => {
 export declare const authUser: (supabase: SupabaseClient) => {
     subscribe: (func: (user: User | null) => void) => () => void;
 };
-export {};

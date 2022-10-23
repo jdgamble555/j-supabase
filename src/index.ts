@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import type { Session, User, SupabaseClient, RealtimePostgresChangesPayload } from "@supabase/supabase-js"
 
-interface SupaSnap<T> {
+export interface SupaSnap<T> {
     data: T[]
     payload: RealtimePostgresChangesPayload<{
         [key: string]: any;
