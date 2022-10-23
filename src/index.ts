@@ -104,7 +104,7 @@ export const authUser = (supabase: SupabaseClient) => {
 }
 
 //
-// encode - decode functions for UUID bet URLS
+// encode - decode functions for UUID better URLS
 //
 
 const DASH_REGEXP = /-/g
