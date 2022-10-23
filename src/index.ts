@@ -31,7 +31,7 @@ export const realtime = <T>(supabase: SupabaseClient, { schema = "public", idFie
                         schema,
                         table,
                         errors: error
-                    } as unknown as RealtimePostgresChangesPayload<{
+                    } as any as RealtimePostgresChangesPayload<{
                         [key: string]: any;
                     }>
                 });
