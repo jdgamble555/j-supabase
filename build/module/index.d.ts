@@ -10,9 +10,9 @@ export declare const realtime: <T>(supabase: SupabaseClient, { schema, idField }
     idField?: string | undefined;
 }) => {
     from: (table: string) => {
-        subscribe: (callback: (snap: SupaSnap<T>) => void) => import("@supabase/supabase-js").RealtimeChannel;
+        subscribe: (callback: (snap: SupaSnap<T>) => void) => (timeout?: number | undefined) => Promise<"error" | "ok" | "timed out">;
         eq: (field: string, value: any) => {
-            subscribe: (callback: (snap: SupaSnap<T>) => void) => import("@supabase/supabase-js").RealtimeChannel;
+            subscribe: (callback: (snap: SupaSnap<T>) => void) => (timeout?: number | undefined) => Promise<"error" | "ok" | "timed out">;
         };
     };
 };

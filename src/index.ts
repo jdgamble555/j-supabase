@@ -60,7 +60,7 @@ export const realtime = <T>(supabase: SupabaseClient, { schema = "public", idFie
 
                     // return ALL data with payload
                     callback({ data: items, payload });
-                }).subscribe();
+                }).subscribe().unsubscribe;
         }
     }
     return {
