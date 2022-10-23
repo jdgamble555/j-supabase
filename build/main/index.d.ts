@@ -22,3 +22,5 @@ export declare const authSession: (supabase: SupabaseClient) => {
 export declare const authUser: (supabase: SupabaseClient) => {
     subscribe: (func: (user: User | null) => void) => () => void;
 };
+export declare const encode: (uuid: string) => string;
+export declare const decode: (uuid58: string) => string;
