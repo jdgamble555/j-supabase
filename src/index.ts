@@ -38,7 +38,7 @@ export const realtime = <T>(supabase: SupabaseClient, { schema = "public", idFie
             });
 
             // grab value changes
-            return supabase.channel(schema + ':' + table + filterChannel)
+            const channel = supabase.channel(schema + ':' + table + filterChannel)
                 .on('postgres_changes', { event: '*', schema, table, filter }, (payload) => {
                     const e = payload.eventType;
                     switch (e) {
@@ -60,7 +60,8 @@ export const realtime = <T>(supabase: SupabaseClient, { schema = "public", idFie
 
                     // return ALL data with payload
                     callback({ data: items, payload });
-                }).subscribe().unsubscribe;
+                }).subscribe();
+            return () => supabase.removeChannel(channel);
         }
     }
     return {
