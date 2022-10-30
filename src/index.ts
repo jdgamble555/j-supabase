@@ -94,14 +94,22 @@ export const authSession = (supabase: SupabaseClient) => {
 export const authUser = (supabase: SupabaseClient) => {
     return {
         subscribe: (func: (user: User | null) => void) => {
-            supabase.auth.getUser()
-                .then((data) => func(data.data.user ?? null));
+            supabase.auth.getSession()
+                .then((data) => func(data.data.session?.user ?? null));
             const auth = supabase.auth.onAuthStateChange((_event, session) => {
                 func(session?.user ?? null);
             });
             return auth.data.subscription.unsubscribe;
         }
     }
+}
+
+// range - calcuate pagination
+
+export const range = ({ page = 1, size = 3 }: { page: number, size: number }) => {
+    const from = (page - 1) * size;
+    const to = from + size - 1;
+    return { from, to };
 }
 
 //
