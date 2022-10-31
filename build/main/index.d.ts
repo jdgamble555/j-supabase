@@ -10,12 +10,12 @@ export declare const realtime: <T>(supabase: SupabaseClient, { schema, idField }
     idField?: string | undefined;
 }) => {
     from: (table: string) => {
-        subscribe: (callback: (snap: SupaSnap<T>) => void) => () => Promise<"error" | "ok" | "timed out">;
+        subscribe: (callback: (snap: SupaSnap<T>) => void) => () => void;
         eq: (field: string, value: any) => {
             single: () => {
-                subscribe: (callback: (snap: SupaSnap<T>) => void) => () => Promise<"error" | "ok" | "timed out">;
+                subscribe: (callback: (snap: SupaSnap<T>) => void) => () => void;
             };
-            subscribe: (callback: (snap: SupaSnap<T>) => void) => () => Promise<"error" | "ok" | "timed out">;
+            subscribe: (callback: (snap: SupaSnap<T>) => void) => () => void;
         };
     };
 };
