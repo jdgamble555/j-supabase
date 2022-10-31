@@ -11,7 +11,7 @@ export interface SupaSnap<T> {
 export const realtime = <T>(supabase: SupabaseClient, { schema = "public", idField = 'id' } = {}) => {
     const items: any[] = [];
 
-    const _subscribe = (table: string, field?: string, value?: string) => {
+    const _subscribe = (table: string, field?: string, value?: string, single = false) => {
         const hasFilter = field && value;
         const filterString = `${field}=eq.${value}`;
         const filterChannel = hasFilter ? ':' + filterString : '';
@@ -59,7 +59,7 @@ export const realtime = <T>(supabase: SupabaseClient, { schema = "public", idFie
                     }
 
                     // return ALL data with payload
-                    callback({ data: items, payload });
+                    return callback({ data: single ? items[0] : items, payload });
                 }).subscribe();
             return () => supabase.removeChannel(channel);
         }
@@ -70,6 +70,11 @@ export const realtime = <T>(supabase: SupabaseClient, { schema = "public", idFie
                 subscribe: _subscribe(table),
                 eq: (field: string, value: any) => {
                     return {
+                        single: () => {
+                            return {
+                                subscribe: _subscribe(table, field, value, true)
+                            }
+                        },
                         subscribe: _subscribe(table, field, value)
                     }
                 }
@@ -83,9 +88,9 @@ export const authSession = (supabase: SupabaseClient) => {
         subscribe: (func: (session: Session | null) => void) => {
             supabase.auth.getSession()
                 .then((data) => func(data.data.session ?? null));
-            const auth = supabase.auth.onAuthStateChange((_event, session) => {
-                func(session ?? null);
-            });
+            const auth = supabase.auth.onAuthStateChange((_event, session) =>
+                func(session ?? null)
+            );
             return auth.data.subscription.unsubscribe;
         }
     }
@@ -96,9 +101,9 @@ export const authUser = (supabase: SupabaseClient) => {
         subscribe: (func: (user: User | null) => void) => {
             supabase.auth.getSession()
                 .then((data) => func(data.data.session?.user ?? null));
-            const auth = supabase.auth.onAuthStateChange((_event, session) => {
-                func(session?.user ?? null);
-            });
+            const auth = supabase.auth.onAuthStateChange((_event, session) =>
+                func(session?.user ?? null)
+            );
             return auth.data.subscription.unsubscribe;
         }
     }
