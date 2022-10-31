@@ -1,4 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
+// Thanks to GaryAustin here for reconnect --> https://github.com/supabase/supabase/discussions/5641#discussioncomment-2292166
+
 import type { Session, User, SupabaseClient, RealtimePostgresChangesPayload } from "@supabase/supabase-js"
 
 export interface SupaSnap<T> {
@@ -40,7 +42,7 @@ export const realtime = <T>(supabase: SupabaseClient, { schema = "public", idFie
                 select.limit(limit).then(({ data, error }) => {
                     if (data) items.push(...data);
                     callback({
-                        data: data ?? [],
+                        data: data ? single ? data[0] : data : [],
                         payload: {
                             schema,
                             table,
