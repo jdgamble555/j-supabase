@@ -2,7 +2,7 @@
 import type { Session, User, SupabaseClient, RealtimePostgresChangesPayload } from "@supabase/supabase-js"
 
 export interface SupaSnap<T> {
-    data: T[]
+    data: T | T[]
     payload: RealtimePostgresChangesPayload<{
         [key: string]: any;
     }>
@@ -61,12 +61,7 @@ export const realtime = <T>(supabase: SupabaseClient, { schema = "public", idFie
                     // return ALL data with payload
                     return callback({ data: single ? items[0] : items, payload });
                 }).subscribe();
-            return {
-                unsubscribe: () => {
-                    console.log('...unsubscribing to channel');
-                    supabase.removeChannel(channel);
-                }
-            }
+            return () => supabase.removeChannel(channel);
         }
     }
     return {
