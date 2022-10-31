@@ -10,12 +10,18 @@ export declare const realtime: <T>(supabase: SupabaseClient, { schema, idField }
     idField?: string | undefined;
 }) => {
     from: (table: string) => {
-        subscribe: (callback: (snap: SupaSnap<T>) => void) => () => void;
+        subscribe: (callback: (snap: SupaSnap<T>) => void) => {
+            unsubscribe: () => void;
+        };
         eq: (field: string, value: any) => {
             single: () => {
-                subscribe: (callback: (snap: SupaSnap<T>) => void) => () => void;
+                subscribe: (callback: (snap: SupaSnap<T>) => void) => {
+                    unsubscribe: () => void;
+                };
             };
-            subscribe: (callback: (snap: SupaSnap<T>) => void) => () => void;
+            subscribe: (callback: (snap: SupaSnap<T>) => void) => {
+                unsubscribe: () => void;
+            };
         };
     };
 };

@@ -61,9 +61,11 @@ export const realtime = <T>(supabase: SupabaseClient, { schema = "public", idFie
                     // return ALL data with payload
                     return callback({ data: single ? items[0] : items, payload });
                 }).subscribe();
-            return () => {
-                console.log('...unsubscribing to channel');
-                supabase.removeChannel(channel);
+            return {
+                unsubscribe: () => {
+                    console.log('...unsubscribing to channel');
+                    supabase.removeChannel(channel);
+                }
             }
         }
     }
