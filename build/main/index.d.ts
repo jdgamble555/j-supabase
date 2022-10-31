@@ -1,19 +1,30 @@
 import type { Session, User, SupabaseClient, RealtimePostgresChangesPayload } from "@supabase/supabase-js";
 export interface SupaSnap<T> {
-    data: T | T[];
+    data: T[];
     payload: RealtimePostgresChangesPayload<{
         [key: string]: any;
     }>;
 }
-export declare const realtime: <T>(supabase: SupabaseClient, { schema, idField }?: {
+export interface SupaSingleSnap<T> {
+    data: T;
+    payload: RealtimePostgresChangesPayload<{
+        [key: string]: any;
+    }>;
+}
+export declare type Payload = RealtimePostgresChangesPayload<{
+    [key: string]: any;
+}>;
+declare type Single<T> = (callback: (snap: SupaSingleSnap<T>) => void) => () => Promise<"error" | "ok" | "timed out">;
+export declare const realtime: <T>(supabase: SupabaseClient, { schema, idField, limit }?: {
     schema?: string | undefined;
     idField?: string | undefined;
+    limit?: number | undefined;
 }) => {
     from: (table: string) => {
         subscribe: (callback: (snap: SupaSnap<T>) => void) => () => Promise<"error" | "ok" | "timed out">;
         eq: (field: string, value: any) => {
             single: () => {
-                subscribe: (callback: (snap: SupaSnap<T>) => void) => () => Promise<"error" | "ok" | "timed out">;
+                subscribe: Single<T>;
             };
             subscribe: (callback: (snap: SupaSnap<T>) => void) => () => Promise<"error" | "ok" | "timed out">;
         };
@@ -34,3 +45,4 @@ export declare const range: ({ page, size }: {
 };
 export declare const encode: (uuid: string) => string;
 export declare const decode: (uuid58: string) => string;
+export {};

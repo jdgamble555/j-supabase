@@ -2,13 +2,24 @@
 import type { Session, User, SupabaseClient, RealtimePostgresChangesPayload } from "@supabase/supabase-js"
 
 export interface SupaSnap<T> {
-    data: T | T[]
+    data: T[];
     payload: RealtimePostgresChangesPayload<{
         [key: string]: any;
-    }>
+    }>;
 }
 
-export const realtime = <T>(supabase: SupabaseClient, { schema = "public", idField = 'id' } = {}) => {
+export interface SupaSingleSnap<T> {
+    data: T;
+    payload: RealtimePostgresChangesPayload<{
+        [key: string]: any;
+    }>;
+}
+
+export type Payload = RealtimePostgresChangesPayload<{ [key: string]: any; }>;
+
+type Single<T> = (callback: (snap: SupaSingleSnap<T>) => void) => () => Promise<"error" | "ok" | "timed out">;
+
+export const realtime = <T>(supabase: SupabaseClient, { schema = "public", idField = 'id', limit = 100 } = {}) => {
     const items: any[] = [];
 
     const _subscribe = (table: string, field?: string, value?: string, single = false) => {
@@ -19,48 +30,59 @@ export const realtime = <T>(supabase: SupabaseClient, { schema = "public", idFie
 
         // create the callback function
         return (callback: (snap: SupaSnap<T>) => void) => {
-            let select = supabase.from(table).select('*');
-            select = hasFilter ? select.eq(field, value) : select;
 
-            // grab current value
-            select.then(({ data, error }) => {
-                if (data) items.push(...data);
-                callback({
-                    data: data ?? [],
-                    payload: {
-                        schema,
-                        table,
-                        errors: error
-                    } as any as RealtimePostgresChangesPayload<{
-                        [key: string]: any;
-                    }>
+            // get the original data
+            const initialize = () => {
+                let select = supabase.from(table).select('*');
+                select = hasFilter ? select.eq(field, value) : select;
+
+                // match subscription input, with limit
+                select.limit(limit).then(({ data, error }) => {
+                    if (data) items.push(...data);
+                    callback({
+                        data: data ?? [],
+                        payload: {
+                            schema,
+                            table,
+                            errors: error
+                        } as any as Payload
+                    });
                 });
-            });
+            };
+
+            // hanlde mutations
+            const realtimeEvents = (payload: Payload) => {
+                switch (payload.eventType) {
+                    case 'INSERT': {
+                        items.push(payload.new);
+                        break;
+                    }
+                    case 'DELETE': {
+                        const i = items.findIndex(r => r[idField] === payload.old[idField]);
+                        if (i !== -1) items.splice(i, 1);
+                        break;
+                    }
+                    case 'UPDATE': {
+                        const i = items.findIndex(r => r[idField] === payload.old[idField]);
+                        if (i !== -1) items.splice(i, 1, payload.new);
+                        break;
+                    }
+                }
+            }
 
             // grab value changes
             const channel = supabase.channel(schema + ':' + table + filterChannel)
                 .on('postgres_changes', { event: '*', schema, table, filter }, (payload) => {
-                    const e = payload.eventType;
-                    switch (e) {
-                        case 'INSERT': {
-                            items.push(payload.new);
-                            break;
-                        }
-                        case 'DELETE': {
-                            const i = items.findIndex(r => r[idField] === payload.old[idField]);
-                            if (i !== -1) items.splice(i, 1);
-                            break;
-                        }
-                        case 'UPDATE': {
-                            const i = items.findIndex(r => r[idField] === payload.old[idField]);
-                            if (i !== -1) items.splice(i, 1, payload.new);
-                            break;
-                        }
-                    }
-
+                    realtimeEvents(payload);
                     // return ALL data with payload
                     return callback({ data: single ? items[0] : items, payload });
-                }).subscribe();
+                }).subscribe((status) => {
+                    if (status === "CHANNEL_ERROR") {
+                        supabase.removeChannel(channel);
+                    } else if (status === 'SUBSCRIBED') {
+                        initialize();
+                    }
+                });
             return () => supabase.removeChannel(channel);
         }
     }
@@ -72,7 +94,7 @@ export const realtime = <T>(supabase: SupabaseClient, { schema = "public", idFie
                     return {
                         single: () => {
                             return {
-                                subscribe: _subscribe(table, field, value, true)
+                                subscribe: _subscribe(table, field, value, true) as Single<T>
                             }
                         },
                         subscribe: _subscribe(table, field, value)
