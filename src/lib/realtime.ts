@@ -101,7 +101,7 @@ export const realtime = <T>(supabase: SupabaseClient, { schema = "public", idFie
                                 subscribe: _subscribe({ table, field, value, single: true, filterName: 'eq' }) as Single<T>
                             }
                         },
-                        subscribe: _subscribe({ table, field, value })
+                        subscribe: _subscribe({ table, field, value, filterName: 'eq' })
                     }
                 },
                 neq: (field: string, value: any) => {
@@ -111,7 +111,7 @@ export const realtime = <T>(supabase: SupabaseClient, { schema = "public", idFie
                                 subscribe: _subscribe({ table, field, value, single: true, filterName: 'neq' }) as Single<T>
                             }
                         },
-                        subscribe: _subscribe({ table, field, value })
+                        subscribe: _subscribe({ table, field, value, filterName: 'neq' })
                     }
                 },
                 gt: (field: string, value: any) => {
@@ -121,7 +121,7 @@ export const realtime = <T>(supabase: SupabaseClient, { schema = "public", idFie
                                 subscribe: _subscribe({ table, field, value, single: true, filterName: 'gt' }) as Single<T>
                             }
                         },
-                        subscribe: _subscribe({ table, field, value })
+                        subscribe: _subscribe({ table, field, value, filterName: 'gt' })
                     }
                 },
                 gte: (field: string, value: any) => {
@@ -131,7 +131,7 @@ export const realtime = <T>(supabase: SupabaseClient, { schema = "public", idFie
                                 subscribe: _subscribe({ table, field, value, single: true, filterName: 'gte' }) as Single<T>
                             }
                         },
-                        subscribe: _subscribe({ table, field, value })
+                        subscribe: _subscribe({ table, field, value, filterName: 'gte' })
                     }
                 },
                 lt: (field: string, value: any) => {
@@ -141,7 +141,7 @@ export const realtime = <T>(supabase: SupabaseClient, { schema = "public", idFie
                                 subscribe: _subscribe({ table, field, value, single: true, filterName: 'lt' }) as Single<T>
                             }
                         },
-                        subscribe: _subscribe({ table, field, value })
+                        subscribe: _subscribe({ table, field, value, filterName: 'lt' })
                     }
                 },
                 lte: (field: string, value: any) => {
@@ -151,7 +151,7 @@ export const realtime = <T>(supabase: SupabaseClient, { schema = "public", idFie
                                 subscribe: _subscribe({ table, field, value, single: true, filterName: 'lte' }) as Single<T>
                             }
                         },
-                        subscribe: _subscribe({ table, field, value })
+                        subscribe: _subscribe({ table, field, value, filterName: 'lte' })
                     }
                 }
             }
