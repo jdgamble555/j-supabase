@@ -89,6 +89,9 @@ export const realtime = <T>(supabase: SupabaseClient, { schema = "public", idFie
     }
     return {
         from: (table: string) => {
+
+            // TODO - cleanup repetitive code with a function here...
+
             return {
                 subscribe: _subscribe({ table }),
                 eq: (field: string, value: any) => {
