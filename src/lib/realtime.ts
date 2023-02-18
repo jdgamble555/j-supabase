@@ -15,8 +15,12 @@ export interface SupaSingleSnap<T> {
     payload: Payload;
 };
 
-type SubscribeInput = { table: string, field?: string, value?: string, single?: boolean, filterName?: FilterNames };
-type FilterNames = 'eq' | 'neq' | 'gt' | 'gte' | 'lt' | 'lte';
+type SubscribeInput = { table: string, field?: string, value?: string | string[], single?: boolean, filterName?: FilterNames };
+
+// filter types
+const _filterNames = ['eq', 'neq', 'gt', 'gte', 'lt', 'lte', 'in'] as const;
+type FilterNames = typeof _filterNames[number];
+
 type Single<T> = (callback: (snap: SupaSingleSnap<T>) => void) => () => Promise<"error" | "ok" | "timed out">;
 
 export const realtime = <T>(supabase: SupabaseClient, { schema = "public", idField = 'id', limit = 100 } = {}) => {
@@ -35,7 +39,7 @@ export const realtime = <T>(supabase: SupabaseClient, { schema = "public", idFie
             // get the original data
             const initialize = () => {
                 let select = supabase.from(table).select('*');
-                select = hasFilter ? select[filterName](field, value) : select;
+                select = hasFilter ? select[filterName](field, value as unknown as unknown[]) : select;
 
                 // match subscription input, with limit
                 select.limit(limit).then(({ data, error }) => {
@@ -46,7 +50,7 @@ export const realtime = <T>(supabase: SupabaseClient, { schema = "public", idFie
                             schema,
                             table,
                             errors: error
-                        } as any as Payload
+                        } as unknown as Payload
                     });
                 });
             };
@@ -90,70 +94,27 @@ export const realtime = <T>(supabase: SupabaseClient, { schema = "public", idFie
     return {
         from: (table: string) => {
 
-            // TODO - cleanup repetitive code with a function here...
-
+            // create filter functions      
+            const createFilterFunc = (f: FilterNames) =>
+                (field: string, value: any) => {
+                    return {
+                        single: () => {
+                            return {
+                                subscribe: _subscribe({ table, field, value, single: true, filterName: f }) as Single<T>
+                            }
+                        },
+                        subscribe: _subscribe({ table, field, value, filterName: f })
+                    }
+                };
             return {
                 subscribe: _subscribe({ table }),
-                eq: (field: string, value: any) => {
-                    return {
-                        single: () => {
-                            return {
-                                subscribe: _subscribe({ table, field, value, single: true, filterName: 'eq' }) as Single<T>
-                            }
-                        },
-                        subscribe: _subscribe({ table, field, value, filterName: 'eq' })
-                    }
-                },
-                neq: (field: string, value: any) => {
-                    return {
-                        single: () => {
-                            return {
-                                subscribe: _subscribe({ table, field, value, single: true, filterName: 'neq' }) as Single<T>
-                            }
-                        },
-                        subscribe: _subscribe({ table, field, value, filterName: 'neq' })
-                    }
-                },
-                gt: (field: string, value: any) => {
-                    return {
-                        single: () => {
-                            return {
-                                subscribe: _subscribe({ table, field, value, single: true, filterName: 'gt' }) as Single<T>
-                            }
-                        },
-                        subscribe: _subscribe({ table, field, value, filterName: 'gt' })
-                    }
-                },
-                gte: (field: string, value: any) => {
-                    return {
-                        single: () => {
-                            return {
-                                subscribe: _subscribe({ table, field, value, single: true, filterName: 'gte' }) as Single<T>
-                            }
-                        },
-                        subscribe: _subscribe({ table, field, value, filterName: 'gte' })
-                    }
-                },
-                lt: (field: string, value: any) => {
-                    return {
-                        single: () => {
-                            return {
-                                subscribe: _subscribe({ table, field, value, single: true, filterName: 'lt' }) as Single<T>
-                            }
-                        },
-                        subscribe: _subscribe({ table, field, value, filterName: 'lt' })
-                    }
-                },
-                lte: (field: string, value: any) => {
-                    return {
-                        single: () => {
-                            return {
-                                subscribe: _subscribe({ table, field, value, single: true, filterName: 'lte' }) as Single<T>
-                            }
-                        },
-                        subscribe: _subscribe({ table, field, value, filterName: 'lte' })
-                    }
-                }
+                eq: createFilterFunc('eq'),
+                neq: createFilterFunc('neq'),
+                gt: createFilterFunc('gt'),
+                gte: createFilterFunc('gte'),
+                lt: createFilterFunc('lt'),
+                lte: createFilterFunc('lte'),
+                in: createFilterFunc('in')
             }
         }
     }
