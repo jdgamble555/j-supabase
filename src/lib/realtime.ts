@@ -29,7 +29,11 @@ export const realtime = <T>(supabase: SupabaseClient, { schema = "public", idFie
     const _subscribe = ({ table, field, value, single = false, filterName }: SubscribeInput) => {
 
         const hasFilter = field && value && filterName;
-        const filterString = `${field}=${filterName}.${value}`;
+        let filterString = `${field}=${filterName}.${value}`;
+        if (filterName === 'in') {
+            if (!Array.isArray(value)) throw new Error('Filter value must be an array when using "in"')
+            filterString = `${field}=${filterName}.(${value.join(',')})`
+        }
         const filterChannel = hasFilter ? ':' + filterString : '';
         const filter = hasFilter ? filterString : undefined;
 
