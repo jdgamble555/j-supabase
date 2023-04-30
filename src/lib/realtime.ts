@@ -17,13 +17,15 @@ export interface SupaSingleSnap<T> {
 
 type SubscribeInput = { table: string, field?: string, value?: string | string[], single?: boolean, filterName?: FilterNames };
 
+type Config = { schema?: string, idField?: string | string[], limit?: number };
+
 // filter types
 const _filterNames = ['eq', 'neq', 'gt', 'gte', 'lt', 'lte', 'in'] as const;
 type FilterNames = typeof _filterNames[number];
 
 type Single<T> = (callback: (snap: SupaSingleSnap<T>) => void) => () => Promise<"error" | "ok" | "timed out">;
 
-export const realtime = <T>(supabase: SupabaseClient, { schema = "public", idField = 'id', limit = 100 } = {}) => {
+export const realtime = <T>(supabase: SupabaseClient, { schema = "public", idField = 'id', limit = 100 }: Config = {}) => {
     const items: any[] = [];
 
     const _subscribe = ({ table, field, value, single = false, filterName }: SubscribeInput) => {
@@ -67,12 +69,22 @@ export const realtime = <T>(supabase: SupabaseClient, { schema = "public", idFie
                         break;
                     }
                     case 'DELETE': {
-                        const i = items.findIndex(r => r[idField] === payload.old[idField]);
+                        let i: number;
+                        if (Array.isArray(idField)) {
+                            i = items.findIndex(r => idField.every(k => r[k] === payload.old[k]));
+                        } else {
+                            i = items.findIndex(r => r[idField] === payload.old[idField]);
+                        }
                         if (i !== -1) items.splice(i, 1);
                         break;
                     }
                     case 'UPDATE': {
-                        const i = items.findIndex(r => r[idField] === payload.old[idField]);
+                        let i: number;
+                        if (Array.isArray(idField)) {
+                            i = items.findIndex(r => idField.every(k => r[k] === payload.old[k]));
+                        } else {
+                            i = items.findIndex(r => r[idField] === payload.old[idField]);
+                        }
                         if (i !== -1) items.splice(i, 1, payload.new);
                         break;
                     }
